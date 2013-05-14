@@ -45,7 +45,6 @@ var Lightbox = {
 			containerID : document, // lightbox container object
 			googleAnalytics : false, // track individual image views using Google Analytics
 			imageDataLocation : 'south', // location of image caption information
-			overlayDuration : .2, // time to fade in shadow overlay
 			loop : true, // whether to continuously loop images
 			overlayDuration : .2, // time to fade in shadow overlay
 			overlayOpacity : .8, // transparency of shadow overlay
