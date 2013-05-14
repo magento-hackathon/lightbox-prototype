@@ -1,50 +1,16 @@
-// -----------------------------------------------------------------------------------
-//
-//	Lightbox Slideshow v1.2 (compatible with Prototype 1.6)
-//	by Justin Barkhuff - http://www.justinbarkhuff.com/lab/lightbox_slideshow/
-//  Updated: 2008-01-11
-//
-//	Largely based on Lightbox v2.02
-//	by Lokesh Dhakar - http://huddletogether.com/projects/lightbox2/
-//	3/31/06
-//
-//	Licensed under the Creative Commons Attribution 2.5 License - http://creativecommons.org/licenses/by/2.5/
-//
-//	The code inserts html at the bottom of the page that looks similar to this:
-//
-//	<div id="overlay"></div>
-//	<div id="lightbox">
-//		<div id="outerImageContainer">
-//			<div id="imageContainer">
-//				<img id="lightboxImage" />
-//				<div id="hoverNav">
-//					<a href="javascript:void(0);" id="prevLinkImg">&laquo; prev</a>
-//					<a href="javascript:void(0);" id="nextLinkImg">next &raquo;</a>
-//				</div>
-//				<div id="loading">
-//					<a href="javascript:void(0);" id="loadingLink">loading</a>
-//				</div>
-//			</div>
-//		</div>
-//		<div id="imageDataContainer">
-//			<div id="imageData">
-//				<div id="imageDetails">
-//					<span id="caption"></span>
-//					<span id="numberDisplay"></span>
-//					<span id="detailsNav">
-//						<a id="prevLinkDetails" href="javascript:void(0);">&laquo; prev</a>
-//						<a id="nextLinkDetails" href="javascript:void(0);">next &raquo;</a>
-//						<a id="slideShowControl" href="javascript:void(0);">stop slideshow</a>
-//					</span>
-//				</div>
-//				<div id="close">
-//					<a id="closeLink" href="javascript:void(0);">close</a>
-//				</div>
-//			</div>
-//		</div>
-//	</div>
-//
-// -----------------------------------------------------------------------------------
+/**
+ * Lightbox (compatible with Prototype 1.6)
+ *
+ * Based on Lightbox Slideshow v1.2
+ * by Justin Barkhuff - http://www.justinbarkhuff.com/lab/lightbox_slideshow/
+ * Orphaned on: 2008-01-11
+ *
+ * Which is in its turn based on Lightbox v2.02
+ * by Lokesh Dhakar - http://huddletogether.com/projects/lightbox2/
+ * from 2006-03-31
+ *
+ * Licensed under the Creative Commons Attribution 2.5 License - http://creativecommons.org/licenses/by/2.5/
+ */
 
 //
 //	Lightbox Object
@@ -54,17 +20,14 @@ var Lightbox = {
 	activeImage : null,
 	badObjects : ['select','object','embed'],
 	container : null,
-	enableSlideshow : null,
 	groupName : null,
 	imageArray : [],
 	options : null,
 	overlayDuration : null,
 	overlayOpacity : null,
-	playSlides : null,
 	refTags : ['a','area'],
 	relAttribute : null,
 	resizeDuration : null,
-	slideShowTimer : null,
 	startImage : null,
 
 	//
@@ -78,28 +41,23 @@ var Lightbox = {
 
 		this.options = $H({
 			animate : true, // resizing animations
-			autoPlay : true, // should slideshow start automatically
 			borderSize : 10, // if you adjust the padding in the CSS, you will need to update this variable
 			containerID : document, // lightbox container object
-			enableSlideshow : true, // enable slideshow feature
 			googleAnalytics : false, // track individual image views using Google Analytics
 			imageDataLocation : 'south', // location of image caption information
-			initImage : '', // ID of image link to automatically launch when upon script initialization
-			loop : true, // whether to continuously loop slideshow images
+			overlayDuration : .2, // time to fade in shadow overlay
+			loop : true, // whether to continuously loop images
 			overlayDuration : .2, // time to fade in shadow overlay
 			overlayOpacity : .8, // transparency of shadow overlay
 			prefix : '', // ID prefix for all dynamically created html elements
 			relAttribute : 'lightbox', // specifies the rel attribute value that triggers lightbox
 			resizeSpeed : 7, // controls the speed of the image resizing (1=slowest and 10=fastest)
 			showGroupName : false, // show group name of images in image details
-			slideTime : 4, // time to display images during slideshow
 			strings : { // allows for localization
 				closeLink : 'close',
 				loadingMsg : 'loading',
 				nextLink : 'next &raquo;',
 				prevLink : '&laquo; prev',
-				startSlideshow : 'start slideshow',
-				stopSlideshow : 'stop slideshow',
 				numDisplayPrefix : 'Image',
 				numDisplaySeparator : 'of'
 			}
@@ -114,9 +72,7 @@ var Lightbox = {
 			this.resizeDuration = 0;
 		}
 
-		this.enableSlideshow = this.options.get('enableSlideshow');
 		this.overlayOpacity = Math.max(Math.min(this.options.get('overlayOpacity'),1),0);
-		this.playSlides = this.options.get('autoPlay');
 		this.container = $(this.options.get('containerID'));
 		this.relAttribute = this.options.get('relAttribute');
 		this.updateImageList();
@@ -171,12 +127,6 @@ var Lightbox = {
 		objNextLink.innerHTML = this.options.get('strings').nextLink;
 		objDetailsNav.appendChild(objNextLink);
 		Event.observe(objNextLink,'click',this.showNext.bindAsEventListener(this));
-
-		var objSlideShowControl = document.createElement('a');
-		objSlideShowControl.setAttribute('id',this.getID('slideShowControl'));
-		objSlideShowControl.setAttribute('href','javascript:void(0);');
-		objDetailsNav.appendChild(objSlideShowControl);
-		Event.observe(objSlideShowControl,'click',this.toggleSlideShow.bindAsEventListener(this));
 
 		var objClose = document.createElement('div');
 		objClose.setAttribute('id',this.getID('close'));
@@ -234,10 +184,6 @@ var Lightbox = {
 
 		if(this.options.get('imageDataLocation') != 'north'){
 			objLightbox.appendChild(objImageDataContainer);
-		}
-
-		if(this.options.get('initImage') != ''){
-			this.start($(this.options.get('initImage')));
 		}
 	},
 
@@ -319,7 +265,6 @@ var Lightbox = {
 		this.activeImage = imageNum;
 
 		this.disableKeyboardNav();
-		this.pauseSlideShow();
 
 		// hide elements during transition
 		$(this.getID('loading')).show();
@@ -335,7 +280,7 @@ var Lightbox = {
 		imgPreloader.onload=function(){
 			$(Lightbox.getID('lightboxImage')).src = imgPreloader.src;
 			Lightbox.resizeImageContainer(imgPreloader.width,imgPreloader.height);
-		}
+		};
 		imgPreloader.src = this.imageArray[this.activeImage].link;
 
 		if(this.options.get('googleAnalytics')){
@@ -399,9 +344,6 @@ var Lightbox = {
 				num_display += ' '+this.options.get('strings').numDisplaySeparator+' '+this.groupName;
 			}
 			$(this.getID('numberDisplay')).update(num_display).show();
-			if(!this.enableSlideshow){
-				$(this.getID('slideShowControl')).hide();
-			}
 			$(this.getID('detailsNav')).show();
 		}
 
@@ -419,58 +361,8 @@ var Lightbox = {
 	updateNav: function() {
 		if(this.imageArray.length > 1){
 			$(this.getID('hoverNav')).show();
-			if(this.enableSlideshow){
-				if(this.playSlides){
-					this.startSlideShow();
-				} else {
-					this.stopSlideShow();
-				}
-			}
 		}
 		this.enableKeyboardNav();
-	},
-	//
-	//	startSlideShow()
-	//	Starts the slide show
-	//
-	startSlideShow: function(){
-		this.playSlides = true;
-		this.slideShowTimer = new PeriodicalExecuter(function(pe){ Lightbox.showNext(); pe.stop(); },this.options.get('slideTime'));
-		$(this.getID('slideShowControl')).update(this.options.get('strings').stopSlideshow);
-	},
-
-	//
-	//	stopSlideShow()
-	//	Stops the slide show
-	//
-	stopSlideShow: function(){
-		this.playSlides = false;
-		if(this.slideShowTimer){
-			this.slideShowTimer.stop();
-		}
-		$(this.getID('slideShowControl')).update(this.options.get('strings').startSlideshow);
-	},
-
-	//
-	//	stopSlideShow()
-	//	Stops the slide show
-	//
-	toggleSlideShow: function(){
-		if(this.playSlides){
-			this.stopSlideShow();
-		}else{
-			this.startSlideShow();
-		}
-	},
-
-	//
-	//	pauseSlideShow()
-	//	Pauses the slide show (doesn't change the value of this.playSlides)
-	//
-	pauseSlideShow: function(){
-		if(this.slideShowTimer){
-			this.slideShowTimer.stop();
-		}
 	},
 
 	//
@@ -542,13 +434,8 @@ var Lightbox = {
 	//	keyboardAction()
 	//
 	keyboardAction: function(e) {
-		if (e == null) { // ie
-			keycode = event.keyCode;
-		} else { // mozilla
-			keycode = e.which;
-		}
-
-		key = String.fromCharCode(keycode).toLowerCase();
+	    var keyCode = e == null ? event.keyCode : e.which;
+		var key = String.fromCharCode(keyCode).toLowerCase();
 
 		if(key == 'x' || key == 'o' || key == 'c'){ // close lightbox
 			Lightbox.end();
@@ -560,10 +447,6 @@ var Lightbox = {
 			Lightbox.showFirst();
 		} else if(key == 'l'){ // display last image
 			Lightbox.showLast();
-		} else if(key == 's'){ // toggle slideshow
-			if(Lightbox.imageArray.length > 0 && Lightbox.options.enableSlideshow){
-				Lightbox.toggleSlideShow();
-			}
 		}
 	},
 
@@ -573,11 +456,11 @@ var Lightbox = {
 	//
 	preloadNeighborImages: function(){
 		var nextImageID = this.imageArray.length - 1 == this.activeImage ? 0 : this.activeImage + 1;
-		nextImage = new Image();
+		var nextImage = new Image();
 		nextImage.src = this.imageArray[nextImageID].link
 
 		var prevImageID = this.activeImage == 0 ? this.imageArray.length - 1 : this.activeImage - 1;
-		prevImage = new Image();
+		var prevImage = new Image();
 		prevImage.src = this.imageArray[prevImageID].link;
 	},
 
@@ -586,7 +469,6 @@ var Lightbox = {
 	//
 	end: function() {
 		this.disableKeyboardNav();
-		this.pauseSlideShow();
 		$(this.getID('lightbox')).hide();
 		new Effect.Fade(this.getID('overlay'), { duration:this.overlayDuration });
 		this.showBadObjects();
@@ -698,8 +580,6 @@ var Lightbox = {
 	getID: function(id){
 		return this.options.get('prefix')+id;
 	}
-}
-
-// -----------------------------------------------------------------------------------
+};
 
 Event.observe(window,'load',function(){ Lightbox.initialize(); });
