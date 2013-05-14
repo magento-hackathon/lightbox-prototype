@@ -379,6 +379,7 @@ var Lightbox = {
 				this.changeImage(this.activeImage+1);
 			}
 		}
+        return true;
 	},
 
 	//
@@ -456,7 +457,7 @@ var Lightbox = {
 	preloadNeighborImages: function(){
 		var nextImageID = this.imageArray.length - 1 == this.activeImage ? 0 : this.activeImage + 1;
 		var nextImage = new Image();
-		nextImage.src = this.imageArray[nextImageID].link
+		nextImage.src = this.imageArray[nextImageID].link;
 
 		var prevImageID = this.activeImage == 0 ? this.imageArray.length - 1 : this.activeImage - 1;
 		var prevImage = new Image();
